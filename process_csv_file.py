@@ -3,6 +3,9 @@ import csv
 import constants as cons
 import os
 import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 def process_bank1_file(data):
     headers = data[0]
@@ -33,7 +36,6 @@ def process_bank3_file(data):
     data[0] = headers
 
     for index, row in enumerate(data[1:]):
-        print(row[0])
         row[0] = datetime.datetime.strptime(row[0], '%d %b %Y').strftime('%d-%m-%Y')
         row[2] = int(row[2]) * int(row[3])
         row.append(row.pop(4))
@@ -42,7 +44,7 @@ def process_bank3_file(data):
     return data
 
 def update_in_csv_file(path, data):
-    file_name = 'unified_bank_data_file.csv'
+    file_name = cons.OUTPUT_FILE_NAME
     fields = data[0]
     rows = data[1:]
     with open(path+file_name, 'w') as csvfile:
@@ -51,35 +53,43 @@ def update_in_csv_file(path, data):
         csvwriter.writerow(fields)
         # writing the data rows
         csvwriter.writerows(rows)
+    logger.info(f"file{file_name} is saved in the path{path}")
 
 def run():
     path = cons.PATH
     files = os.listdir(path)
     output = []
-    for file in files:
-        if file.endswith(".csv"):
+    csv_files  = [f for f in files if f.endswith(".csv")]
+    logger.info(f"bank csv files{''.join(csv_files)}")
+    for file in csv_files:
             with open(path+file, 'r') as csvfile:
                 file_reader = csv.reader(csvfile)
                 file_data = [row for row in file_reader]
 
-                print(file_data)
                 if 'timestamp' in file_data[0]:
                    file1_data = process_bank1_file(file_data)
-                   print(file1_data)
-                   output.extend(file1_data)
-                   print(output)
+                   if len(output) > 0:
+                       output.extend(file1_data[1:])
+                   else:
+                       output.extend(file1_data)
                 elif 'date' in file_data[0]:
                     file2_data = process_bank2_file(file_data)
-                    output.extend(file2_data[1:])
+                    if len(output) > 0:
+                        output.extend(file1_data[1:])
+                    else:
+                        output.extend(file1_data)
                 elif 'date_readable' in file_data[0]:
                     file3_data = process_bank3_file(file_data)
-                    output.extend(file3_data[1:])
+                    if len(output) > 0:
+                        output.extend(file3_data[1:])
+                    else:
+                        output.extend(file3_data)
                 else:
                     pass
 
     if len(output) > 0:
-        print(output)
-        update_in_csv_file(path,output)
+        logger.info(f"all files are processed updating in the unified csv file")
+        update_in_csv_file(path, output)
 
 if __name__ == '__main__':
     run()
