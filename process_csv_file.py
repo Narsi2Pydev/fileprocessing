@@ -75,9 +75,9 @@ def run():
                 elif 'date' in file_data[0]:
                     file2_data = process_bank2_file(file_data)
                     if len(output) > 0:
-                        output.extend(file1_data[1:])
+                        output.extend(file2_data[1:])
                     else:
-                        output.extend(file1_data)
+                        output.extend(file2_data)
                 elif 'date_readable' in file_data[0]:
                     file3_data = process_bank3_file(file_data)
                     if len(output) > 0:
